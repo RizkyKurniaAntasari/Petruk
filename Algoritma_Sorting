@@ -1,0 +1,138 @@
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <chrono>
+#include <cstdlib>
+
+// Insertion Sort
+void insertionSort(std::vector<int>& data) {
+    for (size_t i = 1; i < data.size(); ++i) {
+        int key = data[i];
+        size_t j = i - 1;
+        while (j >= 0 && data[j] > key) {
+            data[j + 1] = data[j];
+            if (j == 0) break;
+            --j;
+        }
+        data[j + 1] = key;
+    }
+}
+
+// Selection Sort
+void selectionSort(std::vector<int>& data) {
+    for (size_t i = 0; i < data.size() - 1; ++i) {
+        size_t minIndex = i;
+        for (size_t j = i + 1; j < data.size(); ++j) {
+            if (data[j] < data[minIndex]) {
+                minIndex = j;
+            }
+        }
+        std::swap(data[i], data[minIndex]);
+    }
+}
+
+// Merge Sort
+void merge(std::vector<int>& data, int left, int mid, int right) {
+    std::vector<int> leftArray(data.begin() + left, data.begin() + mid + 1);
+    std::vector<int> rightArray(data.begin() + mid + 1, data.begin() + right + 1);
+
+    size_t i = 0, j = 0, k = left;
+    while (i < leftArray.size() && j < rightArray.size()) {
+        if (leftArray[i] <= rightArray[j]) {
+            data[k++] = leftArray[i++];
+        } else {
+            data[k++] = rightArray[j++];
+        }
+    }
+
+    while (i < leftArray.size()) {
+        data[k++] = leftArray[i++];
+    }
+
+    while (j < rightArray.size()) {
+        data[k++] = rightArray[j++];
+    }
+}
+
+void mergeSort(std::vector<int>& data, int left, int right) {
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+        mergeSort(data, left, mid);
+        mergeSort(data, mid + 1, right);
+        merge(data, left, mid, right);
+    }
+}
+
+// Quick Sort
+int partition(std::vector<int>& data, int low, int high) {
+    int pivot = data[high];
+    int i = (low - 1);
+
+    for (int j = low; j <= high - 1; ++j) {
+        if (data[j] < pivot) {
+            ++i;
+            std::swap(data[i], data[j]);
+        }
+    }
+    std::swap(data[i + 1], data[high]);
+    return (i + 1);
+}
+
+void quickSort(std::vector<int>& data, int low, int high) {
+    if (low < high) {
+        int pi = partition(data, low, high);
+        quickSort(data, low, pi - 1);
+        quickSort(data, pi + 1, high);
+    }
+}
+
+// Bubble Sort
+void bubbleSort(std::vector<int>& data) {
+    for (size_t i = 0; i < data.size() - 1; ++i) {
+        for (size_t j = 0; j < data.size() - i - 1; ++j) {
+            if (data[j] > data[j + 1]) {
+                std::swap(data[j], data[j + 1]);
+            }
+        }
+    }
+}
+
+// Function to measure execution time
+template <typename Func>
+void measureExecutionTime(Func func, std::vector<int> data, const std::string& name, size_t size, const std::string& type) {
+    auto start = std::chrono::high_resolution_clock::now();
+    func(data);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    std::cout << name << " (" << type << ") with " << size << " elements took " << duration.count() << " seconds" << std::endl;
+}
+
+int main() {
+    std::vector<size_t> sizes = {10, 100, 1000, 10000, 100000};
+
+    for (size_t size : sizes) {
+        std::vector<int> randomData(size);
+        std::generate(randomData.begin(), randomData.end(), std::rand);
+
+        std::vector<int> sortedData = randomData;
+        std::sort(sortedData.begin(), sortedData.end());
+
+        std::vector<int> reversedData = sortedData;
+        std::reverse(reversedData.begin(), reversedData.end());
+
+        // Measure execution time for each sorting algorithm
+        for (const auto& data : {std::make_pair(randomData, "Random"), std::make_pair(sortedData, "Sorted"), std::make_pair(reversedData, "Reversed")}) {
+            measureExecutionTime(insertionSort, data.first, "Insertion Sort", size, data.second);
+            measureExecutionTime(selectionSort, data.first, "Selection Sort", size, data.second);
+            measureExecutionTime([size](std::vector<int>& d) { mergeSort(d, 0, d.size() - 1); }, data.first, "Merge Sort", size, data.second);
+            measureExecutionTime([size](std::vector<int>& d) { quickSort(d, 0, d.size() - 1); }, data.first, "Quick Sort", size, data.second);
+            measureExecutionTime(bubbleSort, data.first, "Bubble Sort", size, data.second);
+            measureExecutionTime([](std::vector<int>& d) { std::sort(d.begin(), d.end()); }, data.first, "STL Sort", size, data.second);
+
+            std::cout << "-----------------------------------------" << std::endl;
+        }
+    }
+
+    return 0;
+}
